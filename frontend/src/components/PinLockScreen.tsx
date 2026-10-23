@@ -1,7 +1,7 @@
 import { Delete, Lock, PiggyBank } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { lockoutSeconds, verifyPin } from '../pinlock';
+import { lockoutSeconds, pinLength, verifyPin } from '../pinlock';
 
 /** Écran de verrouillage plein écran : pavé PIN 4-6 chiffres. */
 export function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
@@ -27,11 +27,13 @@ export function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
     }
   };
 
+  const len = pinLength();
+
   const press = (d: string) => {
     if (cooldown > 0) return;
     const next = (pin + d).slice(0, 6);
     setPin(next);
-    if (next.length >= 4) void submit(next);
+    if (next.length >= len) void submit(next);
   };
 
   return (
@@ -49,15 +51,13 @@ export function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
         className={`mt-6 flex gap-2.5 ${err ? 'animate-shake' : ''}`}
         aria-live="polite"
       >
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: len }).map((_, i) => (
           <span
             key={i}
             className={`h-3 w-3 rounded-full border transition ${
               i < pin.length
                 ? 'border-teal-300 bg-teal-300'
-                : i < 4
-                  ? 'border-white/25'
-                  : 'border-white/10'
+                : 'border-white/25'
             }`}
           />
         ))}

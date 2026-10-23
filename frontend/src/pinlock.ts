@@ -5,6 +5,7 @@
  */
 
 const PIN_KEY = 'flouze-pin';
+const PIN_LEN_KEY = 'flouze-pin-len';
 const SALT_KEY = 'flouze-pin-salt';
 const LOCKED_KEY = 'flouze-locked';
 const ATTEMPTS_KEY = 'flouze-pin-attempts';
@@ -57,10 +58,17 @@ export function unlock() {
 
 export async function setPin(pin: string): Promise<void> {
   localStorage.setItem(PIN_KEY, await hash(pin, getSalt()));
+  localStorage.setItem(PIN_LEN_KEY, String(pin.length));
+}
+
+/** Longueur du PIN configuré (4 par défaut pour les anciens PIN). */
+export function pinLength(): number {
+  return Number(localStorage.getItem(PIN_LEN_KEY)) || 4;
 }
 
 export function clearPin() {
   localStorage.removeItem(PIN_KEY);
+  localStorage.removeItem(PIN_LEN_KEY);
   localStorage.removeItem(LOCKED_KEY);
   sessionStorage.removeItem(ATTEMPTS_KEY);
 }
