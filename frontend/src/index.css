@@ -1,0 +1,350 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-night-950 font-sans text-slate-100 antialiased;
+    background-image:
+      radial-gradient(50rem 26rem at 110% -10%, rgb(45 212 191 / 0.07), transparent 60%),
+      radial-gradient(44rem 28rem at -20% 35%, rgb(139 92 246 / 0.05), transparent 60%);
+    background-attachment: fixed;
+    min-height: 100dvh;
+    font-feature-settings: 'cv11', 'ss01';
+    /* Aucun défilement horizontal involontaire (clip préserve sticky) */
+    overflow-x: clip;
+  }
+  ::selection {
+    @apply bg-teal-400/30;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-teal-400/50 ring-offset-2 ring-offset-night-950;
+  }
+}
+
+@layer components {
+  /* ── Surfaces ─────────────────────────────────────────────── */
+  .card {
+    @apply rounded-2xl border border-white/[0.07] bg-white/[0.035] shadow-soft backdrop-blur-md;
+  }
+  .card-hover {
+    @apply transition duration-200 hover:border-white/[0.13] hover:bg-white/[0.06];
+  }
+  .surface {
+    @apply rounded-xl border border-white/[0.05] bg-white/[0.02];
+  }
+
+  /* ── Boutons ──────────────────────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-150 active:scale-[0.97] disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-gradient-to-r from-teal-400 to-emerald-400 text-night-950 shadow-glow hover:from-teal-300 hover:to-emerald-300;
+  }
+  .btn-ghost {
+    @apply btn border border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10;
+  }
+  .btn-danger {
+    @apply btn border border-rose-400/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20;
+  }
+  .icon-btn {
+    @apply flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition hover:bg-white/[0.06] hover:text-slate-200 active:scale-95;
+  }
+
+  /* ── Champs ───────────────────────────────────────────────── */
+  .input {
+    @apply w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition focus:border-teal-400/60 focus:bg-white/[0.06] focus:ring-2 focus:ring-teal-400/20;
+  }
+  select.input option {
+    @apply bg-night-850 text-slate-100;
+  }
+
+  /* ── Typo & chips ─────────────────────────────────────────── */
+  .lbl {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-medium;
+  }
+  .page-title {
+    @apply text-xl font-bold tracking-tight sm:text-2xl;
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── États ────────────────────────────────────────────────── */
+  .skeleton {
+    @apply animate-pulse rounded-xl bg-white/[0.06];
+  }
+  .empty {
+    @apply flex flex-col items-center gap-2 px-6 py-10 text-center text-sm text-slate-500;
+  }
+
+  /* ── Segmented control (onglets pilules) ──────────────────── */
+  .seg {
+    @apply flex gap-1 rounded-xl border border-white/[0.07] bg-white/[0.03] p-1;
+  }
+  .seg-item {
+    @apply flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400 transition hover:text-slate-200;
+  }
+  .seg-item-active {
+    @apply bg-white/[0.08] text-teal-300 shadow-sm;
+  }
+}
+
+/* ── Thème clair ──────────────────────────────────────────────────
+   Le DOM porte class="light" sur <html>. On remappe les utilitaires
+   "verre fumé" vers un verre clair — les composants ne changent pas. */
+html.light {
+  color-scheme: light;
+}
+.light body {
+  @apply bg-slate-100 text-slate-800;
+  background-image:
+    radial-gradient(50rem 26rem at 110% -10%, rgb(45 212 191 / 0.14), transparent 60%),
+    radial-gradient(44rem 28rem at -20% 35%, rgb(139 92 246 / 0.10), transparent 60%);
+}
+.light :focus-visible {
+  @apply ring-offset-slate-100;
+}
+.light .card {
+  @apply border-black/[0.07] bg-white/90 shadow-sm;
+}
+.light .card-hover {
+  @apply hover:border-black/[0.14] hover:bg-white;
+}
+.light .surface {
+  @apply border-black/[0.06] bg-black/[0.02];
+}
+.light .btn-ghost {
+  @apply border-black/10 bg-black/[0.04] text-slate-700 hover:border-black/20 hover:bg-black/[0.08];
+}
+.light .btn-danger {
+  @apply border-rose-400/40 bg-rose-500/10 text-rose-600 hover:bg-rose-500/15;
+}
+.light .icon-btn {
+  @apply text-slate-500 hover:bg-black/[0.06] hover:text-slate-800;
+}
+.light .input {
+  @apply border-black/10 bg-white text-slate-800 placeholder-slate-400 focus:bg-white;
+}
+.light select.input option {
+  @apply bg-white text-slate-800;
+}
+.light .chip {
+  @apply border-black/10 bg-black/[0.04];
+}
+.light .skeleton {
+  @apply bg-black/[0.06];
+}
+.light .seg {
+  @apply border-black/[0.08] bg-black/[0.03];
+}
+.light .seg-item-active {
+  @apply bg-white text-teal-600;
+}
+
+/* Remappage des utilitaires Tailwind utilisés en ligne dans les pages */
+.light .text-slate-100,
+.light .text-slate-200 {
+  @apply text-slate-800;
+}
+.light .text-slate-300 {
+  @apply text-slate-600;
+}
+.light .text-slate-400 {
+  @apply text-slate-500;
+}
+.light .text-teal-100 {
+  @apply text-teal-800;
+}
+.light .text-teal-200 {
+  @apply text-teal-700;
+}
+.light .text-teal-300 {
+  @apply text-teal-600;
+}
+.light .text-emerald-300 {
+  @apply text-emerald-600;
+}
+.light .text-rose-300 {
+  @apply text-rose-600;
+}
+.light .text-amber-200,
+.light .text-amber-300 {
+  @apply text-amber-600;
+}
+.light .text-sky-200,
+.light .text-sky-300 {
+  @apply text-sky-600;
+}
+.light .text-violet-200,
+.light .text-violet-300 {
+  @apply text-violet-600;
+}
+.light .bg-white\/5,
+.light .bg-white\/10,
+.light .bg-white\/15,
+.light .bg-white\/\[0\.02\],
+.light .bg-white\/\[0\.03\],
+.light .bg-white\/\[0\.035\],
+.light .bg-white\/\[0\.04\],
+.light .bg-white\/\[0\.05\],
+.light .bg-white\/\[0\.06\],
+.light .bg-white\/\[0\.07\],
+.light .bg-white\/\[0\.08\] {
+  @apply bg-black/[0.04];
+}
+.light .border-white\/10,
+.light .border-white\/15,
+.light .border-white\/20,
+.light .border-white\/\[0\.05\],
+.light .border-white\/\[0\.06\],
+.light .border-white\/\[0\.07\],
+.light .border-white\/\[0\.08\] {
+  @apply border-black/10;
+}
+.light .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]),
+.light .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
+  @apply border-black/[0.07];
+}
+.light .hover\:bg-white\/5:hover,
+.light .hover\:bg-white\/10:hover,
+.light .hover\:bg-white\/\[0\.03\]:hover,
+.light .hover\:bg-white\/\[0\.06\]:hover,
+.light .hover\:bg-white\/\[0\.07\]:hover {
+  @apply bg-black/[0.06];
+}
+.light .hover\:border-white\/20:hover {
+  @apply border-black/20;
+}
+.light .bg-night-950\/70 {
+  @apply bg-white/75;
+}
+.light .bg-night-900\/60,
+.light .bg-night-900\/80,
+.light .bg-night-900\/90 {
+  @apply bg-white/85;
+}
+.light .bg-night-900 {
+  @apply bg-white;
+}
+.light .bg-night-800,
+.light .bg-night-850,
+.light .\!bg-night-800 {
+  @apply bg-white;
+}
+.light ::-webkit-scrollbar-thumb {
+  @apply bg-black/15;
+}
+
+/* Barre de défilement discrète */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-white/15;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Respect des préférences de réduction des mouvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Zone sûre (encoche / barre gestuelle) */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Ambiance « vivante » : halos qui dérivent et pulsent ────── */
+@keyframes halo-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate3d(-1.4rem, 0.9rem, 0) scale(1.18);
+    opacity: 0.5;
+  }
+}
+@keyframes halo-drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(1.2rem, -0.8rem, 0) scale(0.92);
+    opacity: 0.95;
+  }
+}
+.anim-halo {
+  animation: halo-drift 9s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.anim-halo-b {
+  animation: halo-drift-b 12s ease-in-out -4s infinite;
+  will-change: transform, opacity;
+}
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 22px rgb(45 212 191 / 0.4),
+      0 10px 22px -10px rgb(0 0 0 / 0.7);
+  }
+  50% {
+    box-shadow:
+      0 0 42px rgb(45 212 191 / 0.65),
+      0 10px 22px -10px rgb(0 0 0 / 0.7);
+  }
+}
+.anim-glow {
+  animation: glow-pulse 3.2s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
+}
+.anim-breathe {
+  animation: breathe 4.5s ease-in-out infinite;
+}
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
+}
+.animate-shake {
+  animation: shake 0.45s ease-in-out;
+}

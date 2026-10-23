@@ -1,0 +1,112 @@
+{
+  "hash": "e8297b28",
+  "configHash": "0b75ceff",
+  "lockfileHash": "2514e513",
+  "browserHash": "081e2768",
+  "optimized": {
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "a482446e",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "9097beb3",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "d6948199",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.js",
+      "file": "react-router-dom.js",
+      "fileHash": "e60defba",
+      "needsInterop": false
+    },
+    "i18next": {
+      "src": "../../node_modules/i18next/dist/esm/i18next.js",
+      "file": "i18next.js",
+      "fileHash": "63021cbc",
+      "needsInterop": false
+    },
+    "i18next-browser-languagedetector": {
+      "src": "../../node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js",
+      "file": "i18next-browser-languagedetector.js",
+      "fileHash": "0e0d9305",
+      "needsInterop": false
+    },
+    "i18next-http-backend": {
+      "src": "../../node_modules/i18next-http-backend/esm/index.js",
+      "file": "i18next-http-backend.js",
+      "fileHash": "336ea495",
+      "needsInterop": false
+    },
+    "react-i18next": {
+      "src": "../../node_modules/react-i18next/dist/es/index.js",
+      "file": "react-i18next.js",
+      "fileHash": "e7c27fc5",
+      "needsInterop": false
+    },
+    "@simplewebauthn/browser": {
+      "src": "../../node_modules/@simplewebauthn/browser/esm/index.js",
+      "file": "@simplewebauthn_browser.js",
+      "fileHash": "4f568643",
+      "needsInterop": false
+    },
+    "lucide-react": {
+      "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "74e1553b",
+      "needsInterop": false
+    },
+    "recharts": {
+      "src": "../../node_modules/recharts/es6/index.js",
+      "file": "recharts.js",
+      "fileHash": "ba6aca38",
+      "needsInterop": false
+    },
+    "html-to-image": {
+      "src": "../../node_modules/html-to-image/es/index.js",
+      "file": "html-to-image.js",
+      "fileHash": "24fe1854",
+      "needsInterop": false
+    },
+    "canvas-confetti": {
+      "src": "../../node_modules/canvas-confetti/dist/confetti.module.mjs",
+      "file": "canvas-confetti.js",
+      "fileHash": "12dd2e81",
+      "needsInterop": false
+    },
+    "react-dom": {
+      "src": "../../node_modules/react-dom/index.js",
+      "file": "react-dom.js",
+      "fileHash": "2aa13205",
+      "needsInterop": true
+    },
+    "simple-icons": {
+      "src": "../../node_modules/simple-icons/index.mjs",
+      "file": "simple-icons.js",
+      "fileHash": "766c3a0a",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "browser-ponyfill-RSX72JWA": {
+      "file": "browser-ponyfill-RSX72JWA.js"
+    },
+    "chunk-LER6W43O": {
+      "file": "chunk-LER6W43O.js"
+    },
+    "chunk-32E4H3EV": {
+      "file": "chunk-32E4H3EV.js"
+    },
+    "chunk-G3PMV62Z": {
+      "file": "chunk-G3PMV62Z.js"
+    }
+  }
+}

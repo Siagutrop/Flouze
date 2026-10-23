@@ -1,0 +1,476 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Utilisateurs & foyers ───────────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  MEMBER
+}
+
+model Household {
+  id                   String   @id @default(uuid())
+  name                 String
+  defaultCurrencyCode  String   @default("EUR")
+  defaultCurrency      Currency @relation(fields: [defaultCurrencyCode], references: [code])
+  // Jour du mois où le budget du mois suivant est généré en draft (modifiable)
+  budgetGenerationDay  Int      @default(1)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  users               User[]
+  invitations         Invitation[]
+  accounts            Account[]
+  categories          Category[]
+  envelopes           Envelope[]
+  transactions        Transaction[]
+  recurringTemplates  RecurringTemplate[]
+  txTemplates         TxTemplate[]
+  debts               Debt[]
+  credits             Credit[]
+  savingsGoals        SavingsGoal[]
+  budgetPeriods       BudgetPeriod[]
+  envelopeTransfers   EnvelopeTransfer[]
+  auditLogs           AuditLog[]
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  displayName  String
+  avatarUrl    String?   // émoji ou data-URL (image redimensionnée côté client)
+  locale       String    @default("fr")
+  role         Role      @default(MEMBER)
+  householdId  String
+  household    Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  webauthnChallenge String? // challenge de la cérémonie WebAuthn en cours
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  refreshTokens      RefreshToken[]
+  achievements       UserAchievement[]
+  webauthnCredentials WebAuthnCredential[]
+  pushSubscriptions  PushSubscription[]
+  accounts           Account[]           @relation("AccountOwner")
+  categories         Category[]          @relation("CategoryOwner")
+  envelopes          Envelope[]          @relation("EnvelopeOwner")
+  transactions       Transaction[]       @relation("TransactionCreator")
+  recurringTemplates RecurringTemplate[] @relation("RecurringOwner")
+  txTemplates        TxTemplate[]        @relation("TxTemplateOwner")
+  debts              Debt[]              @relation("DebtOwner")
+  credits            Credit[]            @relation("CreditOwner")
+  savingsGoals       SavingsGoal[]       @relation("SavingsGoalOwner")
+  budgetPeriods      BudgetPeriod[]      @relation("BudgetPeriodOwner")
+  auditLogs          AuditLog[]
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// ─── Passkeys / WebAuthn ─────────────────────────────────────────────────────
+
+model WebAuthnCredential {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String   @unique // base64url
+  publicKey    Bytes
+  counter      BigInt   @default(0)
+  transports   String? // JSON
+  name         String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Invitation {
+  id          String    @id @default(uuid())
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  email       String
+  token       String    @unique
+  createdById String
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+// ─── Devises (packs communautaires : ajouter des lignes au seed) ────────────
+
+model Currency {
+  code       String @id // ISO 4217, ex. "EUR"
+  name       String
+  symbol     String
+  minorUnits Int    @default(2) // 0 pour JPY, 3 pour BHD…
+  isActive   Boolean @default(true)
+
+  households Household[]
+  accounts   Account[]
+}
+
+// ─── Comptes ─────────────────────────────────────────────────────────────────
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CASH
+  CREDIT_CARD
+  OTHER
+}
+
+// ownerId = null → compte du foyer ; sinon compte personnel (visible par lui seul)
+model Account {
+  id             String      @id @default(uuid())
+  householdId    String
+  household      Household   @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerId        String?
+  owner          User?       @relation("AccountOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  name           String
+  type           AccountType @default(CHECKING)
+  currencyCode   String
+  currency       Currency    @relation(fields: [currencyCode], references: [code])
+  initialBalance BigInt      @default(0) // en unités mineures (centimes)
+  cover          String?     // clé de dégradé (cover:…) ou data-URL
+  archivedAt     DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  transactions       Transaction[]   @relation("AccountTransactions")
+  incomingTransfers  Transaction[]   @relation("AccountTransferTarget")
+  recurringTemplates RecurringTemplate[]
+  txTemplates        TxTemplate[]
+  credits            Credit[]
+  savingsGoals       SavingsGoal[]
+
+  @@index([householdId, ownerId])
+}
+
+// ─── Catégories & enveloppes ─────────────────────────────────────────────────
+
+model Category {
+  id          String     @id @default(uuid())
+  householdId String
+  household   Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerId     String?
+  owner       User?      @relation("CategoryOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String
+  icon        String?
+  color       String?
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  envelopes Envelope[]
+
+  @@index([householdId, ownerId])
+}
+
+model Envelope {
+  id          String     @id @default(uuid())
+  householdId String
+  household   Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerId     String?
+  owner       User?      @relation("EnvelopeOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  name        String
+  icon        String?
+  color       String?
+  cover       String?     // clé de dégradé (cover:…) ou data-URL
+  alertThreshold BigInt? // alerte quand le disponible passe sous ce seuil
+  isFavorite  Boolean    @default(false) // épinglée sur le dashboard avec jauge circulaire
+  sortOrder   Int        @default(0)
+  archivedAt  DateTime?
+  createdAt   DateTime   @default(now())
+
+  transactions       Transaction[]
+  recurringTemplates RecurringTemplate[]
+  txTemplates        TxTemplate[]
+  budgetLines        BudgetLine[]
+  transfersOut       EnvelopeTransfer[] @relation("TransferFrom")
+  transfersIn        EnvelopeTransfer[] @relation("TransferTo")
+  savingsGoals       SavingsGoal[]
+
+  @@index([householdId, ownerId])
+}
+
+// ─── Transactions ────────────────────────────────────────────────────────────
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+  ACCOUNT_TRANSFER
+}
+
+model Transaction {
+  id             String          @id @default(uuid())
+  householdId    String
+  household      Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  accountId      String
+  account        Account         @relation("AccountTransactions", fields: [accountId], references: [id], onDelete: Cascade)
+  toAccountId    String? // virement entre comptes
+  toAccount      Account?        @relation("AccountTransferTarget", fields: [toAccountId], references: [id])
+  envelopeId     String?
+  envelope       Envelope?       @relation(fields: [envelopeId], references: [id])
+  type           TransactionType
+  amount         BigInt // unités mineures, toujours positif ; le sens vient de `type`
+  label          String
+  note           String?
+  mandatory      Boolean         @default(false) // dépense obligatoire (loyer, factures…)
+  date           DateTime        @db.Date
+  createdById    String
+  createdBy      User            @relation("TransactionCreator", fields: [createdById], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([householdId, date])
+  @@index([envelopeId, date])
+  @@index([accountId, date])
+}
+
+// ─── Récurrents ──────────────────────────────────────────────────────────────
+
+enum RecurringKind {
+  INCOME
+  EXPENSE
+}
+
+enum Frequency {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+model RecurringTemplate {
+  id          String        @id @default(uuid())
+  householdId String
+  household   Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerId     String?
+  owner       User?         @relation("RecurringOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  kind        RecurringKind
+  accountId   String
+  account     Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  envelopeId  String?
+  envelope    Envelope?     @relation(fields: [envelopeId], references: [id])
+  amount      BigInt
+  label       String
+  icon        String?       // clé de marque (netflix…), émoji ou data-URL
+  mandatory   Boolean       @default(false)
+  isSubscription Boolean    @default(false)
+  frequency   Frequency     @default(MONTHLY)
+  dayOfMonth  Int? // pour MONTHLY/QUARTERLY/YEARLY
+  startDate   DateTime      @db.Date
+  endDate     DateTime?     @db.Date
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([householdId, ownerId])
+}
+
+// ─── Crédits & objectifs d'épargne ───────────────────────────────────────────
+
+model Credit {
+  id                String    @id @default(uuid())
+  householdId       String
+  household         Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerId           String?
+  owner             User?     @relation("CreditOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  name              String
+  accountId         String?
+  account           Account?  @relation(fields: [accountId], references: [id])
+  principal         BigInt
+  annualRatePercent Decimal   @default(0) @db.Decimal(6, 3)
+  monthlyPayment    BigInt
+  cover             String?   // clé de dégradé (cover:…) ou data-URL
+  startDate         DateTime  @db.Date
+  endDate           DateTime? @db.Date
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model SavingsGoal {
+  id          String     @id @default(uuid())
+  householdId String
+  household   Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerId     String?
+  owner       User?      @relation("SavingsGoalOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String
+  icon        String?    // emoji d'illustration (🏖️, 🚗, …)
+  cover       String?    // clé de dégradé (cover:…) ou data-URL
+  targetAmount BigInt
+  deadline    DateTime?  @db.Date
+  accountId   String?
+  account     Account?   @relation(fields: [accountId], references: [id])
+  envelopeId  String?
+  envelope    Envelope?  @relation(fields: [envelopeId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// ─── Budget mensuel ──────────────────────────────────────────────────────────
+
+enum PeriodStatus {
+  DRAFT // généré automatiquement, en attente de validation
+  ACTIVE
+  CLOSED // figé, plus de modification
+}
+
+// ownerId = null → budget global du foyer ; sinon budget personnel du membre.
+// L'unicité (householdId, ownerId, year, month) est garantie au niveau applicatif
+// (PostgreSQL ne déduplique pas les NULL dans les contraintes uniques).
+model BudgetPeriod {
+  id          String       @id @default(uuid())
+  householdId String
+  household   Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerId     String?
+  owner       User?        @relation("BudgetPeriodOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  year        Int
+  month       Int // 1-12
+  status      PeriodStatus @default(DRAFT)
+  generatedAt DateTime     @default(now())
+  validatedAt DateTime?
+  closedAt    DateTime?
+
+  lines             BudgetLine[]
+  envelopeTransfers EnvelopeTransfer[]
+
+  @@index([householdId, ownerId, year, month])
+}
+
+model BudgetLine {
+  id          String       @id @default(uuid())
+  periodId    String
+  period      BudgetPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  envelopeId  String
+  envelope    Envelope     @relation(fields: [envelopeId], references: [id], onDelete: Cascade)
+  allocated   BigInt       @default(0)
+  carryoverIn BigInt       @default(0)
+  note        String?
+
+  @@unique([periodId, envelopeId])
+}
+
+model EnvelopeTransfer {
+  id             String       @id @default(uuid())
+  householdId    String
+  household      Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  periodId       String
+  period         BudgetPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  fromEnvelopeId String
+  fromEnvelope   Envelope     @relation("TransferFrom", fields: [fromEnvelopeId], references: [id])
+  toEnvelopeId   String
+  toEnvelope     Envelope     @relation("TransferTo", fields: [toEnvelopeId], references: [id])
+  amount         BigInt
+  date           DateTime     @db.Date
+  note           String?
+  createdById    String
+  createdAt      DateTime     @default(now())
+}
+
+// ─── Gamification ────────────────────────────────────────────────────────────
+
+// Les définitions de badges vivent dans le code (gamification/definitions.ts) ;
+// cette table enregistre ceux déjà obtenus pour ne pas les re-notifier.
+// Abonnement push PWA d'un appareil (rappels de saisie).
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  keysJson  Json // { p256dh, auth }
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model UserAchievement {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code     String // ex. "first_transaction"
+  earnedAt DateTime @default(now())
+
+  @@unique([userId, code])
+  @@index([userId])
+}
+
+// ─── Journal d'audit ─────────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String    @id @default(uuid())
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  action      String // ex. "transaction.created", "budget.validated"
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+
+  @@index([householdId, createdAt])
+}
+
+// ─── Modèles de transaction (templates réutilisables) ────────────────────────
+
+model TxTemplate {
+  id          String          @id @default(uuid())
+  householdId String
+  household   Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerId     String?         // null = partagé foyer, sinon perso
+  owner       User?           @relation("TxTemplateOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  label       String
+  type        TransactionType @default(EXPENSE) // EXPENSE ou INCOME
+  amount      BigInt          @default(0) // unités mineures
+  accountId   String?
+  account     Account?        @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  envelopeId  String?
+  envelope    Envelope?       @relation(fields: [envelopeId], references: [id], onDelete: SetNull)
+  mandatory   Boolean         @default(false)
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+
+  @@index([householdId, ownerId])
+}
+
+// ─── Prêts & dettes entre personnes ──────────────────────────────────────────
+
+enum DebtDirection {
+  OWED_TO_ME // j'ai prêté → on me doit de l'argent
+  I_OWE      // j'ai emprunté → je dois de l'argent
+}
+
+model Debt {
+  id          String        @id @default(uuid())
+  householdId String
+  household   Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerId     String?
+  owner       User?         @relation("DebtOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  person      String        // nom de la personne concernée
+  direction   DebtDirection
+  amount      BigInt        // montant total prêté/emprunté (unités mineures)
+  paid        BigInt        @default(0) // montant déjà remboursé
+  note        String?
+  closedAt    DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([householdId, ownerId])
+}
